@@ -4,6 +4,13 @@
     class="card block hover:shadow-lg transition-shadow duration-200 cursor-pointer overflow-hidden border-t-4"
     :class="borderColor"
   >
+    <img
+      v-if="recipe.imageUrl"
+      :src="recipe.imageUrl"
+      :alt="recipe.name"
+      class="-mx-4 -mt-4 mb-3 w-[calc(100%+2rem)] h-32 object-cover"
+      @error="$event.target.style.display = 'none'"
+    />
     <div class="flex items-start justify-between mb-2">
       <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">{{ recipe.name }}</h3>
       <span

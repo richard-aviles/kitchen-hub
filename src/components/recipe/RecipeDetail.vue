@@ -14,6 +14,15 @@
       </div>
     </div>
 
+    <!-- Hero image -->
+    <img
+      v-if="recipe.imageUrl"
+      :src="recipe.imageUrl"
+      :alt="recipe.name"
+      class="w-full h-48 sm:h-64 object-cover rounded-xl mb-6"
+      @error="$event.target.style.display = 'none'"
+    />
+
     <!-- Metadata -->
     <div class="flex flex-wrap gap-4 mb-6 text-sm text-gray-600 dark:text-gray-400">
       <span v-if="recipe.prepTime" class="flex items-center gap-1">

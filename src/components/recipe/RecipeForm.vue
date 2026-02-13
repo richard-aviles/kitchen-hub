@@ -40,6 +40,19 @@
       <textarea v-model="form.notes" rows="3" class="input text-sm" placeholder="Tips, variations, etc." />
     </div>
 
+    <!-- Image URL -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image URL</label>
+      <input v-model="form.imageUrl" type="url" class="input text-sm" placeholder="https://example.com/photo.jpg" />
+      <img
+        v-if="form.imageUrl"
+        :src="form.imageUrl"
+        alt="Recipe preview"
+        class="mt-2 w-full h-40 object-cover rounded-lg border border-gray-200 dark:border-slate-600"
+        @error="$event.target.style.display = 'none'"
+      />
+    </div>
+
     <!-- Source URL -->
     <div>
       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Source URL</label>
@@ -84,6 +97,7 @@ const defaultForm = {
   tags: { mealType: [], cuisine: '', custom: [] },
   nutrition: { calories: null, protein: null, carbs: null, fat: null },
   notes: '',
+  imageUrl: '',
   sourceUrl: ''
 }
 
@@ -107,6 +121,7 @@ const form = reactive(
         },
         nutrition: { ...{ calories: null, protein: null, carbs: null, fat: null }, ...props.initialData.nutrition },
         notes: props.initialData.notes || '',
+        imageUrl: props.initialData.imageUrl || '',
         sourceUrl: props.initialData.sourceUrl || ''
       }
     : JSON.parse(JSON.stringify(defaultForm))
