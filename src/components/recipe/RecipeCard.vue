@@ -25,7 +25,8 @@
       <span
         v-for="type in recipe.tags?.mealType || []"
         :key="type"
-        class="px-2 py-0.5 text-xs font-medium rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
+        class="px-2 py-0.5 text-xs font-medium rounded-full"
+        :class="mealTagColor(type)"
       >
         {{ type }}
       </span>
@@ -57,6 +58,18 @@ const props = defineProps({
     required: true
   }
 })
+
+const mealTagColors = {
+  Breakfast: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+  Lunch: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+  Dinner: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
+  Snack: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
+  Dessert: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300',
+}
+
+function mealTagColor(type) {
+  return mealTagColors[type] || 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
+}
 
 const mealTypeBorders = {
   Breakfast: 'border-amber-400 dark:border-amber-500',

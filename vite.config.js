@@ -13,7 +13,7 @@ export default defineConfig({
         name: 'KitchenHub',
         short_name: 'KitchenHub',
         description: 'Personal meal planning and grocery list app',
-        theme_color: '#22c55e',
+        theme_color: '#10b981',
         background_color: '#f0fdf4',
         display: 'standalone',
         orientation: 'any',
