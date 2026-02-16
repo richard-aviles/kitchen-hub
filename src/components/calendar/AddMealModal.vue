@@ -119,23 +119,49 @@
             </button>
           </div>
 
-          <!-- Nutrition preview for food -->
-          <div v-if="selectedItem.type === 'food' && selectedItem.data.nutrition" class="grid grid-cols-4 gap-2 text-center bg-gray-50 dark:bg-slate-700 rounded-lg p-2 mb-4">
-            <div>
-              <div class="text-sm font-bold text-amber-600 dark:text-amber-400">{{ selectedItem.data.nutrition.calories }}</div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">Cal</div>
-            </div>
-            <div>
-              <div class="text-sm font-bold text-sky-600 dark:text-sky-400">{{ selectedItem.data.nutrition.protein }}g</div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">Protein</div>
-            </div>
-            <div>
-              <div class="text-sm font-bold text-violet-600 dark:text-violet-400">{{ selectedItem.data.nutrition.carbs }}g</div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">Carbs</div>
-            </div>
-            <div>
-              <div class="text-sm font-bold text-rose-600 dark:text-rose-400">{{ selectedItem.data.nutrition.fat }}g</div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">Fat</div>
+          <!-- Editable nutrition for food -->
+          <div v-if="selectedItem.type === 'food'" class="mb-4">
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Adjust nutrition if needed:</p>
+            <div class="grid grid-cols-4 gap-2 bg-gray-50 dark:bg-slate-700 rounded-lg p-2">
+              <div class="text-center">
+                <input
+                  v-model.number="editNutrition.calories"
+                  type="number"
+                  min="0"
+                  class="w-full text-center text-sm font-bold text-amber-600 dark:text-amber-400 bg-white dark:bg-slate-600 border border-gray-200 dark:border-slate-500 rounded px-1 py-1"
+                />
+                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Cal</div>
+              </div>
+              <div class="text-center">
+                <input
+                  v-model.number="editNutrition.protein"
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  class="w-full text-center text-sm font-bold text-sky-600 dark:text-sky-400 bg-white dark:bg-slate-600 border border-gray-200 dark:border-slate-500 rounded px-1 py-1"
+                />
+                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Protein (g)</div>
+              </div>
+              <div class="text-center">
+                <input
+                  v-model.number="editNutrition.carbs"
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  class="w-full text-center text-sm font-bold text-violet-600 dark:text-violet-400 bg-white dark:bg-slate-600 border border-gray-200 dark:border-slate-500 rounded px-1 py-1"
+                />
+                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Carbs (g)</div>
+              </div>
+              <div class="text-center">
+                <input
+                  v-model.number="editNutrition.fat"
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  class="w-full text-center text-sm font-bold text-rose-600 dark:text-rose-400 bg-white dark:bg-slate-600 border border-gray-200 dark:border-slate-500 rounded px-1 py-1"
+                />
+                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Fat (g)</div>
+              </div>
             </div>
           </div>
 
@@ -208,6 +234,7 @@ const activeTab = ref('recipe')
 const searchQuery = ref('')
 const selectedItem = ref(null)  // { type: 'recipe'|'food', name, data }
 const servings = ref(1)
+const editNutrition = ref({ calories: 0, protein: 0, carbs: 0, fat: 0 })
 const searchInput = ref(null)
 const foodSearchPanel = ref(null)
 
@@ -265,14 +292,24 @@ function selectFood(food) {
     name: food.name,
     data: food
   }
+  editNutrition.value = {
+    calories: food.nutrition?.calories || 0,
+    protein: food.nutrition?.protein || 0,
+    carbs: food.nutrition?.carbs || 0,
+    fat: food.nutrition?.fat || 0
+  }
   servings.value = 1
 }
 
 function confirmAdd() {
   if (selectedItem.value.type === 'food') {
+    const food = {
+      ...selectedItem.value.data,
+      nutrition: { ...editNutrition.value }
+    }
     emit('save', {
-      foodId: selectedItem.value.data.id,
-      food: selectedItem.value.data,
+      foodId: food.id,
+      food,
       servings: servings.value
     })
   } else {
