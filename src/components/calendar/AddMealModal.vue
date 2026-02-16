@@ -21,8 +21,24 @@
           </button>
         </div>
 
-        <!-- Step 1: Recipe selection -->
-        <div v-if="!selectedRecipe" class="flex-1 overflow-hidden flex flex-col">
+        <!-- Tab bar -->
+        <div class="flex border-b dark:border-slate-700" v-if="!selectedItem">
+          <button
+            v-for="tab in tabs"
+            :key="tab.id"
+            type="button"
+            @click="activeTab = tab.id"
+            class="flex-1 py-2.5 text-sm font-medium text-center transition-colors"
+            :class="activeTab === tab.id
+              ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+          >
+            {{ tab.label }}
+          </button>
+        </div>
+
+        <!-- Tab content: Recipe (original behavior) -->
+        <div v-if="activeTab === 'recipe' && !selectedItem" class="flex-1 overflow-hidden flex flex-col">
           <!-- Search -->
           <div class="p-4 border-b dark:border-slate-700">
             <input
@@ -72,17 +88,55 @@
           </div>
         </div>
 
-        <!-- Step 2: Servings selection -->
-        <div v-else class="p-4">
+        <!-- Tab content: Food Search -->
+        <FoodSearchPanel
+          v-if="activeTab === 'food' && !selectedItem"
+          ref="foodSearchPanel"
+          @select="selectFood"
+        />
+
+        <!-- Tab content: Barcode Scanner -->
+        <BarcodeScannerPanel
+          v-if="activeTab === 'scan' && !selectedItem"
+          @select="selectFood"
+        />
+
+        <!-- Servings selection (shared for both recipe and food) -->
+        <div v-if="selectedItem" class="p-4">
           <div class="mb-4">
-            <p class="font-medium text-gray-800 dark:text-gray-100">{{ selectedRecipe.name }}</p>
+            <div class="flex items-center gap-2">
+              <span v-if="selectedItem.type === 'food'" class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/40">
+                <BoltIcon class="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+              </span>
+              <p class="font-medium text-gray-800 dark:text-gray-100">{{ selectedItem.name }}</p>
+            </div>
             <button
               type="button"
-              @click="selectedRecipe = null"
-              class="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+              @click="selectedItem = null"
+              class="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 mt-1"
             >
-              &larr; Choose different recipe
+              &larr; Choose different {{ selectedItem.type === 'food' ? 'food' : 'recipe' }}
             </button>
+          </div>
+
+          <!-- Nutrition preview for food -->
+          <div v-if="selectedItem.type === 'food' && selectedItem.data.nutrition" class="grid grid-cols-4 gap-2 text-center bg-gray-50 dark:bg-slate-700 rounded-lg p-2 mb-4">
+            <div>
+              <div class="text-sm font-bold text-amber-600 dark:text-amber-400">{{ selectedItem.data.nutrition.calories }}</div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">Cal</div>
+            </div>
+            <div>
+              <div class="text-sm font-bold text-sky-600 dark:text-sky-400">{{ selectedItem.data.nutrition.protein }}g</div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">Protein</div>
+            </div>
+            <div>
+              <div class="text-sm font-bold text-violet-600 dark:text-violet-400">{{ selectedItem.data.nutrition.carbs }}g</div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">Carbs</div>
+            </div>
+            <div>
+              <div class="text-sm font-bold text-rose-600 dark:text-rose-400">{{ selectedItem.data.nutrition.fat }}g</div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">Fat</div>
+            </div>
           </div>
 
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Servings</label>
@@ -120,8 +174,10 @@
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
 import { format } from 'date-fns'
-import { XMarkIcon, BookOpenIcon } from '@heroicons/vue/24/outline'
+import { XMarkIcon, BookOpenIcon, BoltIcon } from '@heroicons/vue/24/outline'
 import { useRecipeStore } from '../../stores'
+import FoodSearchPanel from './FoodSearchPanel.vue'
+import BarcodeScannerPanel from './BarcodeScannerPanel.vue'
 
 const props = defineProps({
   show: {
@@ -142,10 +198,18 @@ const emit = defineEmits(['save', 'cancel'])
 
 const recipeStore = useRecipeStore()
 
+const tabs = [
+  { id: 'recipe', label: 'Recipe' },
+  { id: 'food', label: 'Food Search' },
+  { id: 'scan', label: 'Scan Barcode' }
+]
+
+const activeTab = ref('recipe')
 const searchQuery = ref('')
-const selectedRecipe = ref(null)
+const selectedItem = ref(null)  // { type: 'recipe'|'food', name, data }
 const servings = ref(1)
 const searchInput = ref(null)
+const foodSearchPanel = ref(null)
 
 const slotLabel = computed(() => {
   return props.mealSlot ? props.mealSlot.charAt(0).toUpperCase() + props.mealSlot.slice(1) : ''
@@ -170,22 +234,52 @@ const filteredRecipes = computed(() => {
 
 watch(() => props.show, (isVisible) => {
   if (isVisible) {
+    activeTab.value = 'recipe'
     searchQuery.value = ''
-    selectedRecipe.value = null
+    selectedItem.value = null
     servings.value = 1
     nextTick(() => searchInput.value?.focus())
   }
 })
 
+watch(activeTab, (tab) => {
+  if (tab === 'recipe') {
+    nextTick(() => searchInput.value?.focus())
+  } else if (tab === 'food') {
+    nextTick(() => foodSearchPanel.value?.focus())
+  }
+})
+
 function selectRecipe(recipe) {
-  selectedRecipe.value = recipe
+  selectedItem.value = {
+    type: 'recipe',
+    name: recipe.name,
+    data: recipe
+  }
   servings.value = recipe.servings || 1
 }
 
+function selectFood(food) {
+  selectedItem.value = {
+    type: 'food',
+    name: food.name,
+    data: food
+  }
+  servings.value = 1
+}
+
 function confirmAdd() {
-  emit('save', {
-    recipeId: selectedRecipe.value.id,
-    servings: servings.value
-  })
+  if (selectedItem.value.type === 'food') {
+    emit('save', {
+      foodId: selectedItem.value.data.id,
+      food: selectedItem.value.data,
+      servings: servings.value
+    })
+  } else {
+    emit('save', {
+      recipeId: selectedItem.value.data.id,
+      servings: servings.value
+    })
+  }
 }
 </script>

@@ -8,7 +8,7 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useNutritionCalc } from '../../composables/useNutritionCalc'
-import { useMealPlanStore, useRecipeStore } from '../../stores'
+import { useMealPlanStore, useRecipeStore, useFoodStore } from '../../stores'
 
 const props = defineProps({
   date: {
@@ -19,12 +19,14 @@ const props = defineProps({
 
 const mealPlanStore = useMealPlanStore()
 const recipeStore = useRecipeStore()
+const foodStore = useFoodStore()
 
 const { weekEntries } = storeToRefs(mealPlanStore)
 
 const { dailyNutrition } = useNutritionCalc(
   weekEntries,
-  recipeStore.getById
+  recipeStore.getById,
+  foodStore.getById
 )
 
 const calories = computed(() => {

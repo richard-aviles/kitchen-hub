@@ -20,6 +20,7 @@
         <MealEntry
           :entry="element"
           :recipe="getRecipe(element.recipeId)"
+          :food="getFood(element.foodId)"
           @remove="$emit('remove-meal', $event)"
         />
       </template>
@@ -47,7 +48,7 @@
 import { ref, computed, watch } from 'vue'
 import draggable from 'vuedraggable'
 import MealEntry from './MealEntry.vue'
-import { useRecipeStore } from '../../stores'
+import { useRecipeStore, useFoodStore } from '../../stores'
 
 const props = defineProps({
   date: {
@@ -68,6 +69,7 @@ const props = defineProps({
 const emit = defineEmits(['add-meal', 'remove-meal', 'move-meal'])
 
 const recipeStore = useRecipeStore()
+const foodStore = useFoodStore()
 
 const slotColorMap = {
   breakfast: 'text-amber-500 dark:text-amber-400',
@@ -83,7 +85,13 @@ watch(() => props.entries, (newEntries) => {
 }, { deep: true })
 
 function getRecipe(recipeId) {
+  if (!recipeId) return null
   return recipeStore.getById(recipeId)
+}
+
+function getFood(foodId) {
+  if (!foodId) return null
+  return foodStore.getById(foodId)
 }
 
 function onChange(evt) {

@@ -50,16 +50,18 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useNutritionCalc } from '../../composables/useNutritionCalc'
-import { useMealPlanStore, useRecipeStore } from '../../stores'
+import { useMealPlanStore, useRecipeStore, useFoodStore } from '../../stores'
 
 const mealPlanStore = useMealPlanStore()
 const recipeStore = useRecipeStore()
+const foodStore = useFoodStore()
 
 const { weekEntries } = storeToRefs(mealPlanStore)
 
 const { weeklyTotals, dailyAverages, hasAnyNutrition } = useNutritionCalc(
   weekEntries,
-  recipeStore.getById
+  recipeStore.getById,
+  foodStore.getById
 )
 
 function formatNum(n) {

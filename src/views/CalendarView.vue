@@ -33,13 +33,14 @@
  */
 import { ref, onMounted } from 'vue'
 import { startOfWeek } from 'date-fns'
-import { useMealPlanStore, useRecipeStore } from '../stores'
+import { useMealPlanStore, useRecipeStore, useFoodStore } from '../stores'
 import WeekCalendar from '../components/calendar/WeekCalendar.vue'
 import WeekNutritionSummary from '../components/calendar/WeekNutritionSummary.vue'
 import AddMealModal from '../components/calendar/AddMealModal.vue'
 
 const mealPlanStore = useMealPlanStore()
 const recipeStore = useRecipeStore()
+const foodStore = useFoodStore()
 
 const showModal = ref(false)
 const modalDate = ref('')
@@ -49,7 +50,8 @@ onMounted(async () => {
   const weekStart = startOfWeek(new Date())
   await Promise.all([
     recipeStore.loadAll(),
-    mealPlanStore.loadWeek(weekStart)
+    mealPlanStore.loadWeek(weekStart),
+    foodStore.loadAll()
   ])
 })
 
@@ -59,9 +61,15 @@ function openAddModal({ date, slot }) {
   showModal.value = true
 }
 
-async function handleSave({ recipeId, servings }) {
+async function handleSave({ recipeId, foodId, food, servings }) {
+  // If this is a food, save it to the food store first
+  if (foodId && food) {
+    await foodStore.addOrUpdate(food)
+  }
+
   await mealPlanStore.addMeal({
     recipeId,
+    foodId,
     date: modalDate.value,
     slot: modalSlot.value,
     servings

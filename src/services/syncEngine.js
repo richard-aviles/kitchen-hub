@@ -23,13 +23,16 @@ import {
   exportMealPlans,
   importMealPlans,
   exportShopping,
-  importShopping
+  importShopping,
+  exportFoods,
+  importFoods
 } from './dataSerializer.js'
 
 const DATA_FILES = [
   { name: 'recipes.json', exportFn: exportRecipes, importFn: importRecipes },
   { name: 'mealplans.json', exportFn: exportMealPlans, importFn: importMealPlans },
-  { name: 'shopping.json', exportFn: exportShopping, importFn: importShopping }
+  { name: 'shopping.json', exportFn: exportShopping, importFn: importShopping },
+  { name: 'foods.json', exportFn: exportFoods, importFn: importFoods }
 ]
 
 const METADATA_FILE = 'sync-metadata.json'

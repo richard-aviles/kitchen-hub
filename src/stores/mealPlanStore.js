@@ -56,16 +56,20 @@ export const useMealPlanStore = defineStore('mealPlan', () => {
     }
   }
 
-  async function addMeal({ recipeId, date, slot, servings }) {
+  async function addMeal({ recipeId, foodId, date, slot, servings }) {
     const now = new Date().toISOString()
     const entry = {
       id: crypto.randomUUID(),
-      recipeId,
       date,
       slot,
       servings: servings || 1,
       createdAt: now,
       updatedAt: now
+    }
+    if (foodId) {
+      entry.foodId = foodId
+    } else {
+      entry.recipeId = recipeId
     }
     await addMealPlan(entry)
     entries.value.push(entry)

@@ -16,4 +16,13 @@ db.version(1).stores({
   settings: 'key'
 })
 
+db.version(2).stores({
+  recipes: 'id, name, *tags.mealType, createdAt, updatedAt',
+  mealPlans: 'id, date, [date+slot]',
+  shopping: 'id, name, checked, category',
+  photos: 'id, recipeId',
+  settings: 'key',
+  foods: 'id, name, barcode, source'
+})
+
 export default db

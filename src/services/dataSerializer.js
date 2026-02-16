@@ -57,3 +57,20 @@ export async function importShopping(data) {
     await db.shopping.bulkAdd(data)
   }
 }
+
+/**
+ * Export all foods.
+ */
+export async function exportFoods() {
+  return db.foods.toArray()
+}
+
+/**
+ * Import foods: clear existing and bulk-add new data.
+ */
+export async function importFoods(data) {
+  await db.foods.clear()
+  if (data?.length) {
+    await db.foods.bulkAdd(data)
+  }
+}

@@ -6,7 +6,7 @@
  */
 import { ref, computed, watch } from 'vue'
 import { useOnline } from '@vueuse/core'
-import { useSettingsStore, useRecipeStore, useMealPlanStore, useShoppingStore } from '../stores'
+import { useSettingsStore, useRecipeStore, useMealPlanStore, useShoppingStore, useFoodStore } from '../stores'
 import { ensureToken } from '../services/googleAuth.js'
 import { getOrCreateFolder } from '../services/googleDrive.js'
 import { sync, markDirty, hasPendingChanges } from '../services/syncEngine.js'
@@ -86,12 +86,14 @@ async function reloadStores() {
   const recipeStore = useRecipeStore()
   const mealPlanStore = useMealPlanStore()
   const shoppingStore = useShoppingStore()
+  const foodStore = useFoodStore()
 
   await recipeStore.loadAll()
   if (mealPlanStore.currentWeekStart) {
     await mealPlanStore.loadWeek(mealPlanStore.currentWeekStart)
   }
   await shoppingStore.loadAll()
+  await foodStore.loadAll()
 }
 
 /**
