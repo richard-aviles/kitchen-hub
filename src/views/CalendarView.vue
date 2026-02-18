@@ -6,13 +6,24 @@
       {{ mealPlanStore.error }}
     </div>
 
-    <WeekCalendar
+    <DayDetail
+      v-if="viewMode === 'day'"
+      :initial-date="selectedDay"
       @add-meal="openAddModal"
       @remove-meal="handleRemoveMeal"
       @move-meal="handleMoveMeal"
+      @back="viewMode = 'week'"
     />
 
-    <WeekNutritionSummary />
+    <WeekCalendar
+      v-else
+      @add-meal="openAddModal"
+      @remove-meal="handleRemoveMeal"
+      @move-meal="handleMoveMeal"
+      @select-day="handleSelectDay"
+    />
+
+    <WeekNutritionSummary v-if="viewMode === 'week'" />
 
     <AddMealModal
       :show="showModal"
@@ -35,6 +46,7 @@ import { ref, onMounted } from 'vue'
 import { startOfWeek } from 'date-fns'
 import { useMealPlanStore, useRecipeStore, useFoodStore } from '../stores'
 import WeekCalendar from '../components/calendar/WeekCalendar.vue'
+import DayDetail from '../components/calendar/DayDetail.vue'
 import WeekNutritionSummary from '../components/calendar/WeekNutritionSummary.vue'
 import AddMealModal from '../components/calendar/AddMealModal.vue'
 
@@ -42,6 +54,8 @@ const mealPlanStore = useMealPlanStore()
 const recipeStore = useRecipeStore()
 const foodStore = useFoodStore()
 
+const viewMode = ref('week')
+const selectedDay = ref(null)
 const showModal = ref(false)
 const modalDate = ref('')
 const modalSlot = ref('')
@@ -75,6 +89,11 @@ async function handleSave({ recipeId, foodId, food, servings }) {
     servings
   })
   showModal.value = false
+}
+
+function handleSelectDay(date) {
+  selectedDay.value = date
+  viewMode.value = 'day'
 }
 
 async function handleRemoveMeal(id) {

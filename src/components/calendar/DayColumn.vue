@@ -3,8 +3,12 @@
     class="rounded-lg p-3 transition-colors"
     :class="isToday ? 'bg-primary-50 dark:bg-primary-900/20' : 'bg-gray-50 dark:bg-slate-800'"
   >
-    <!-- Day header -->
-    <div class="text-center mb-3">
+    <!-- Day header (clickable to open daily view) -->
+    <button
+      type="button"
+      class="w-full text-center mb-3 rounded-md py-1 transition-colors hover:bg-primary-100 dark:hover:bg-primary-900/30"
+      @click="$emit('select-day', date)"
+    >
       <div class="text-xs font-medium uppercase tracking-wide" :class="isToday ? 'text-primary-600 dark:text-primary-400' : 'text-gray-500 dark:text-gray-400'">
         {{ dayName }}
       </div>
@@ -14,7 +18,7 @@
       >
         {{ dayNumber }}
       </div>
-    </div>
+    </button>
 
     <!-- Desktop: vertical stack of slots -->
     <div class="hidden md:flex md:flex-col md:gap-3">
@@ -67,7 +71,7 @@ const props = defineProps({
   }
 })
 
-defineEmits(['add-meal', 'remove-meal', 'move-meal'])
+defineEmits(['add-meal', 'remove-meal', 'move-meal', 'select-day'])
 
 const mealSlots = ['breakfast', 'lunch', 'dinner']
 const mealPlanStore = useMealPlanStore()
