@@ -69,6 +69,7 @@
         @remove-meal="$emit('remove-meal', $event)"
         @move-meal="$emit('move-meal', $event)"
         @select-day="$emit('select-day', $event)"
+        @edit-meal="$emit('edit-meal', $event)"
       />
     </div>
 
@@ -83,6 +84,7 @@
         @remove-meal="$emit('remove-meal', $event)"
         @move-meal="$emit('move-meal', $event)"
         @select-day="$emit('select-day', $event)"
+        @edit-meal="$emit('edit-meal', $event)"
       />
     </div>
   </div>
@@ -95,7 +97,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
 import DayColumn from './DayColumn.vue'
 import { useMealPlanStore } from '../../stores'
 
-const emit = defineEmits(['add-meal', 'remove-meal', 'move-meal', 'select-day'])
+const emit = defineEmits(['add-meal', 'remove-meal', 'move-meal', 'select-day', 'edit-meal'])
 
 const mealPlanStore = useMealPlanStore()
 const today = new Date()

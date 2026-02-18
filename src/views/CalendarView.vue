@@ -12,6 +12,7 @@
       @add-meal="openAddModal"
       @remove-meal="handleRemoveMeal"
       @move-meal="handleMoveMeal"
+      @edit-meal="openEditModal"
       @back="viewMode = 'week'"
     />
 
@@ -21,6 +22,7 @@
       @remove-meal="handleRemoveMeal"
       @move-meal="handleMoveMeal"
       @select-day="handleSelectDay"
+      @edit-meal="openEditModal"
     />
 
     <WeekNutritionSummary v-if="viewMode === 'week'" />
@@ -31,6 +33,14 @@
       :meal-slot="modalSlot"
       @save="handleSave"
       @cancel="showModal = false"
+    />
+
+    <EditMealModal
+      :show="showEditModal"
+      :entry="editEntry"
+      @save="handleEditSave"
+      @delete="handleEditDelete"
+      @cancel="showEditModal = false"
     />
   </div>
 </template>
@@ -49,6 +59,7 @@ import WeekCalendar from '../components/calendar/WeekCalendar.vue'
 import DayDetail from '../components/calendar/DayDetail.vue'
 import WeekNutritionSummary from '../components/calendar/WeekNutritionSummary.vue'
 import AddMealModal from '../components/calendar/AddMealModal.vue'
+import EditMealModal from '../components/calendar/EditMealModal.vue'
 
 const mealPlanStore = useMealPlanStore()
 const recipeStore = useRecipeStore()
@@ -59,6 +70,8 @@ const selectedDay = ref(null)
 const showModal = ref(false)
 const modalDate = ref('')
 const modalSlot = ref('')
+const showEditModal = ref(false)
+const editEntry = ref(null)
 
 onMounted(async () => {
   const weekStart = startOfWeek(new Date())
@@ -94,6 +107,21 @@ async function handleSave({ recipeId, foodId, food, servings }) {
 function handleSelectDay(date) {
   selectedDay.value = date
   viewMode.value = 'day'
+}
+
+function openEditModal(entry) {
+  editEntry.value = entry
+  showEditModal.value = true
+}
+
+async function handleEditSave({ id, servings }) {
+  await mealPlanStore.updateMeal(id, { servings })
+  showEditModal.value = false
+}
+
+async function handleEditDelete(id) {
+  await mealPlanStore.removeMeal(id)
+  showEditModal.value = false
 }
 
 async function handleRemoveMeal(id) {

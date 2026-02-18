@@ -22,6 +22,7 @@
           :recipe="getRecipe(element.recipeId)"
           :food="getFood(element.foodId)"
           @remove="$emit('remove-meal', $event)"
+          @edit="$emit('edit-meal', $event)"
         />
       </template>
     </draggable>
@@ -66,7 +67,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['add-meal', 'remove-meal', 'move-meal'])
+const emit = defineEmits(['add-meal', 'remove-meal', 'move-meal', 'edit-meal'])
 
 const recipeStore = useRecipeStore()
 const foodStore = useFoodStore()

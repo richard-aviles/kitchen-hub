@@ -65,6 +65,7 @@
             @add-meal="$emit('add-meal', $event)"
             @remove-meal="$emit('remove-meal', $event)"
             @move-meal="$emit('move-meal', $event)"
+            @edit-meal="$emit('edit-meal', $event)"
           />
         </div>
       </div>
@@ -111,7 +112,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['add-meal', 'remove-meal', 'move-meal', 'back'])
+const emit = defineEmits(['add-meal', 'remove-meal', 'move-meal', 'edit-meal', 'back'])
 
 const mealPlanStore = useMealPlanStore()
 const recipeStore = useRecipeStore()
