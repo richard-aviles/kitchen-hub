@@ -120,6 +120,18 @@
       <p class="text-gray-700 dark:text-gray-300 whitespace-pre-line">{{ recipe.notes }}</p>
     </div>
 
+    <!-- YouTube embed -->
+    <div v-if="youtubeVideoId" class="card mb-4">
+      <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-3">Video</h2>
+      <iframe
+        :src="`https://www.youtube.com/embed/${youtubeVideoId}`"
+        class="w-full aspect-video rounded-lg"
+        frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen
+      ></iframe>
+    </div>
+
     <!-- Source link -->
     <div v-if="recipe.sourceUrl" class="mb-4">
       <a
@@ -178,6 +190,14 @@ const mealTagColors = {
 function mealTagColor(type) {
   return mealTagColors[type] || 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
 }
+
+function getYouTubeId(url) {
+  if (!url) return null
+  const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})/)
+  return match ? match[1] : null
+}
+
+const youtubeVideoId = computed(() => getYouTubeId(props.recipe.sourceUrl))
 
 const hasNutrition = computed(() => {
   const n = props.recipe.nutrition
