@@ -22,11 +22,14 @@
 import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useRecipeStore } from '../stores'
+import { useSettingsStore } from '../stores/settingsStore.js'
 import RecipeForm from '../components/recipe/RecipeForm.vue'
+import { uploadPhoto, deletePhoto } from '../services/photoService.js'
 
 const route = useRoute()
 const router = useRouter()
 const recipeStore = useRecipeStore()
+const settingsStore = useSettingsStore()
 
 const isEditMode = computed(() => !!route.params.id)
 const recipe = computed(() =>
@@ -39,14 +42,42 @@ onMounted(async () => {
   }
 })
 
-async function handleSave(formData) {
+async function handleSave(formData, photoAction) {
+  let recipeId
+  let existingDriveFileId = null
+
   if (isEditMode.value) {
-    await recipeStore.update(route.params.id, formData)
-    router.push(`/recipes/${route.params.id}`)
+    recipeId = route.params.id
+    existingDriveFileId = recipe.value?.driveFileId || null
+    await recipeStore.update(recipeId, formData)
   } else {
     const newRecipe = await recipeStore.add(formData)
-    router.push(`/recipes/${newRecipe.id}`)
+    recipeId = newRecipe.id
   }
+
+  // Handle photo upload/removal
+  if (photoAction?.photoFile && settingsStore.settings?.driveFolderId) {
+    try {
+      const driveFileId = await uploadPhoto(
+        settingsStore.settings.driveFolderId,
+        recipeId,
+        photoAction.photoFile,
+        existingDriveFileId
+      )
+      await recipeStore.update(recipeId, { driveFileId })
+    } catch (err) {
+      console.warn('Photo upload failed:', err.message)
+    }
+  } else if (photoAction?.photoRemoved && existingDriveFileId) {
+    try {
+      await deletePhoto(recipeId, existingDriveFileId)
+      await recipeStore.update(recipeId, { driveFileId: null })
+    } catch (err) {
+      console.warn('Photo delete failed:', err.message)
+    }
+  }
+
+  router.push(`/recipes/${recipeId}`)
 }
 
 function handleCancel() {

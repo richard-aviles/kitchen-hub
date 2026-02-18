@@ -144,3 +144,70 @@ export async function downloadFile(token, fileId) {
 
   return res.json()
 }
+
+/**
+ * Upload an image file to a folder using multipart upload.
+ * @param {Blob} blob - Image blob (JPEG)
+ * @returns {{ id: string }}
+ */
+export async function uploadImage(token, folderId, fileName, blob) {
+  const metadata = {
+    name: fileName,
+    mimeType: 'image/jpeg',
+    parents: [folderId]
+  }
+
+  const form = new FormData()
+  form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }))
+  form.append('file', blob)
+
+  const res = await fetch(`${UPLOAD_URL}?uploadType=multipart&fields=id`, {
+    method: 'POST',
+    headers: headers(token),
+    body: form
+  })
+  if (!res.ok) throw new Error(`Failed to upload image: ${res.status}`)
+
+  const result = await res.json()
+  return { id: result.id }
+}
+
+/**
+ * Update an existing image file's content.
+ * @param {Blob} blob - Image blob (JPEG)
+ */
+export async function updateImage(token, fileId, blob) {
+  const res = await fetch(`${UPLOAD_URL}/${fileId}?uploadType=media`, {
+    method: 'PATCH',
+    headers: {
+      ...headers(token),
+      'Content-Type': 'image/jpeg'
+    },
+    body: blob
+  })
+  if (!res.ok) throw new Error(`Failed to update image: ${res.status}`)
+}
+
+/**
+ * Download a file as a raw Blob (for images).
+ * @returns {Blob}
+ */
+export async function downloadImage(token, fileId) {
+  const res = await fetch(`${BASE_URL}/${fileId}?alt=media`, {
+    headers: headers(token)
+  })
+  if (!res.ok) throw new Error(`Failed to download image: ${res.status}`)
+
+  return res.blob()
+}
+
+/**
+ * Delete a file from Drive.
+ */
+export async function deleteFile(token, fileId) {
+  const res = await fetch(`${BASE_URL}/${fileId}`, {
+    method: 'DELETE',
+    headers: headers(token)
+  })
+  if (!res.ok && res.status !== 404) throw new Error(`Failed to delete file: ${res.status}`)
+}

@@ -2,12 +2,12 @@
  * Data Serializer
  *
  * Handles export from and import to IndexedDB.
- * Photos are local-only and not synced (DEC-010).
+ * Photos are stored in Google Drive; driveFileId is synced with recipe data.
  */
 import db from '../db/index.js'
 
 /**
- * Export all recipes, stripping photoId (photos are local-only).
+ * Export all recipes. driveFileId is included so other devices can fetch photos from Drive.
  */
 export async function exportRecipes() {
   const recipes = await db.recipes.toArray()

@@ -5,8 +5,8 @@
     :class="borderColor"
   >
     <img
-      v-if="recipe.imageUrl"
-      :src="recipe.imageUrl"
+      v-if="uploadedPhotoUrl || recipe.imageUrl"
+      :src="uploadedPhotoUrl || recipe.imageUrl"
       :alt="recipe.name"
       class="-mx-4 -mt-4 mb-3 w-[calc(100%+2rem)] h-32 object-cover"
       @error="$event.target.style.display = 'none'"
@@ -49,14 +49,33 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch, onBeforeUnmount } from 'vue'
 import { ClockIcon, UsersIcon } from '@heroicons/vue/24/outline'
+import { getPhotoUrl, revokePhotoUrl } from '../../services/photoService.js'
 
 const props = defineProps({
   recipe: {
     type: Object,
     required: true
   }
+})
+
+const uploadedPhotoUrl = ref(null)
+
+async function loadPhoto() {
+  revokePhotoUrl(uploadedPhotoUrl.value)
+  uploadedPhotoUrl.value = null
+
+  if (props.recipe?.driveFileId) {
+    const url = await getPhotoUrl(props.recipe.id, props.recipe.driveFileId)
+    if (url) uploadedPhotoUrl.value = url
+  }
+}
+
+watch(() => props.recipe?.id, loadPhoto, { immediate: true })
+
+onBeforeUnmount(() => {
+  revokePhotoUrl(uploadedPhotoUrl.value)
 })
 
 const mealTagColors = {

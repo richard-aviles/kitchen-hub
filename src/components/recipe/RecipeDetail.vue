@@ -14,10 +14,10 @@
       </div>
     </div>
 
-    <!-- Hero image -->
+    <!-- Hero image: uploaded photo takes priority over imageUrl -->
     <img
-      v-if="recipe.imageUrl"
-      :src="recipe.imageUrl"
+      v-if="uploadedPhotoUrl || recipe.imageUrl"
+      :src="uploadedPhotoUrl || recipe.imageUrl"
       :alt="recipe.name"
       class="w-full h-48 sm:h-64 object-cover rounded-xl mb-6"
       @error="$event.target.style.display = 'none'"
@@ -135,8 +135,9 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch, onBeforeUnmount } from 'vue'
 import { ClockIcon, UsersIcon } from '@heroicons/vue/24/outline'
+import { getPhotoUrl, revokePhotoUrl } from '../../services/photoService.js'
 
 const props = defineProps({
   recipe: {
@@ -146,6 +147,25 @@ const props = defineProps({
 })
 
 defineEmits(['edit', 'delete'])
+
+const uploadedPhotoUrl = ref(null)
+
+// Load uploaded photo when recipe has a driveFileId
+async function loadPhoto() {
+  revokePhotoUrl(uploadedPhotoUrl.value)
+  uploadedPhotoUrl.value = null
+
+  if (props.recipe?.driveFileId) {
+    const url = await getPhotoUrl(props.recipe.id, props.recipe.driveFileId)
+    if (url) uploadedPhotoUrl.value = url
+  }
+}
+
+watch(() => props.recipe?.id, loadPhoto, { immediate: true })
+
+onBeforeUnmount(() => {
+  revokePhotoUrl(uploadedPhotoUrl.value)
+})
 
 const mealTagColors = {
   Breakfast: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
