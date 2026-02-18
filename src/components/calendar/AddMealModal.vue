@@ -283,7 +283,7 @@ function selectRecipe(recipe) {
     name: recipe.name,
     data: recipe
   }
-  servings.value = recipe.servings || 1
+  servings.value = 1
 }
 
 function selectFood(food) {

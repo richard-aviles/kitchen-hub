@@ -54,29 +54,53 @@
           <p class="font-medium text-gray-800 dark:text-gray-100">{{ product.name }}</p>
           <p v-if="product.brand" class="text-sm text-gray-500 dark:text-gray-400">{{ product.brand }}</p>
         </div>
+        <p class="text-xs text-gray-500 dark:text-gray-400 text-center">Adjust nutrition if needed:</p>
         <div class="grid grid-cols-4 gap-2 text-center bg-gray-50 dark:bg-slate-700 rounded-lg p-3">
           <div>
-            <div class="text-lg font-bold text-amber-600 dark:text-amber-400">{{ product.nutrition.calories }}</div>
-            <div class="text-xs text-gray-500 dark:text-gray-400">Calories</div>
+            <input
+              v-model.number="editNutrition.calories"
+              type="number"
+              min="0"
+              class="w-full text-center text-lg font-bold text-amber-600 dark:text-amber-400 bg-white dark:bg-slate-600 border border-gray-200 dark:border-slate-500 rounded px-1 py-1"
+            />
+            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Calories</div>
           </div>
           <div>
-            <div class="text-lg font-bold text-sky-600 dark:text-sky-400">{{ product.nutrition.protein }}g</div>
-            <div class="text-xs text-gray-500 dark:text-gray-400">Protein</div>
+            <input
+              v-model.number="editNutrition.protein"
+              type="number"
+              min="0"
+              step="0.1"
+              class="w-full text-center text-lg font-bold text-sky-600 dark:text-sky-400 bg-white dark:bg-slate-600 border border-gray-200 dark:border-slate-500 rounded px-1 py-1"
+            />
+            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Protein (g)</div>
           </div>
           <div>
-            <div class="text-lg font-bold text-violet-600 dark:text-violet-400">{{ product.nutrition.carbs }}g</div>
-            <div class="text-xs text-gray-500 dark:text-gray-400">Carbs</div>
+            <input
+              v-model.number="editNutrition.carbs"
+              type="number"
+              min="0"
+              step="0.1"
+              class="w-full text-center text-lg font-bold text-violet-600 dark:text-violet-400 bg-white dark:bg-slate-600 border border-gray-200 dark:border-slate-500 rounded px-1 py-1"
+            />
+            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Carbs (g)</div>
           </div>
           <div>
-            <div class="text-lg font-bold text-rose-600 dark:text-rose-400">{{ product.nutrition.fat }}g</div>
-            <div class="text-xs text-gray-500 dark:text-gray-400">Fat</div>
+            <input
+              v-model.number="editNutrition.fat"
+              type="number"
+              min="0"
+              step="0.1"
+              class="w-full text-center text-lg font-bold text-rose-600 dark:text-rose-400 bg-white dark:bg-slate-600 border border-gray-200 dark:border-slate-500 rounded px-1 py-1"
+            />
+            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Fat (g)</div>
           </div>
         </div>
         <p class="text-xs text-center text-gray-400 dark:text-gray-500">per {{ product.servingSize }}</p>
 
         <button
           type="button"
-          @click="$emit('select', product)"
+          @click="selectProduct"
           class="btn btn-primary w-full"
         >
           Select This Product
@@ -97,13 +121,14 @@
 import { ref, onBeforeUnmount } from 'vue'
 import { lookupBarcode } from '../../services/openFoodFactsApi.js'
 
-defineEmits(['select'])
+const emit = defineEmits(['select'])
 
 const scanning = ref(false)
 const loading = ref(false)
 const error = ref(null)
 const product = ref(null)
 const manualBarcode = ref('')
+const editNutrition = ref({ calories: 0, protein: 0, carbs: 0, fat: 0 })
 
 let scanner = null
 
@@ -143,6 +168,12 @@ async function lookupProduct(barcode) {
     const result = await lookupBarcode(barcode)
     if (result) {
       product.value = result
+      editNutrition.value = {
+        calories: result.nutrition?.calories || 0,
+        protein: result.nutrition?.protein || 0,
+        carbs: result.nutrition?.carbs || 0,
+        fat: result.nutrition?.fat || 0
+      }
     } else {
       error.value = `Product not found for barcode: ${barcode}`
     }
@@ -169,6 +200,13 @@ async function stopScanner() {
     scanner.clear()
     scanner = null
   }
+}
+
+function selectProduct() {
+  emit('select', {
+    ...product.value,
+    nutrition: { ...editNutrition.value }
+  })
 }
 
 function reset() {
