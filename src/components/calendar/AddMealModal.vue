@@ -209,14 +209,55 @@
             </div>
           </div>
 
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Servings</label>
-          <input
-            v-model.number="servings"
-            type="number"
-            min="1"
-            max="99"
-            class="input w-24 mb-4"
-          />
+          <!-- Servings / Amount toggle (foods only) -->
+          <div v-if="canUseAmount" class="flex gap-1 bg-gray-100 dark:bg-slate-700 rounded-lg p-1 w-fit mb-3">
+            <button
+              type="button"
+              @click="setInputMode('servings')"
+              class="px-3 py-1 text-xs font-medium rounded-md transition-colors"
+              :class="inputMode === 'servings'
+                ? 'bg-white dark:bg-slate-600 shadow-sm text-gray-800 dark:text-gray-100'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+            >
+              Servings
+            </button>
+            <button
+              type="button"
+              @click="setInputMode('amount')"
+              class="px-3 py-1 text-xs font-medium rounded-md transition-colors"
+              :class="inputMode === 'amount'
+                ? 'bg-white dark:bg-slate-600 shadow-sm text-gray-800 dark:text-gray-100'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+            >
+              Amount ({{ parsedServingSize?.unit }})
+            </button>
+          </div>
+
+          <!-- Servings input -->
+          <div v-if="inputMode === 'servings'">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Servings</label>
+            <input
+              v-model.number="servings"
+              type="number"
+              min="0.25"
+              step="0.25"
+              class="input w-24 mb-4"
+            />
+          </div>
+
+          <!-- Amount input -->
+          <div v-else>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Amount ({{ parsedServingSize?.unit }})
+            </label>
+            <input
+              v-model.number="rawAmount"
+              type="number"
+              min="0.1"
+              step="1"
+              class="input w-24 mb-4"
+            />
+          </div>
 
           <div class="flex gap-2">
             <button
@@ -281,6 +322,8 @@ const searchQuery = ref('')
 const myFoodsSearch = ref('')
 const selectedItem = ref(null)  // { type: 'recipe'|'food', name, data }
 const servings = ref(1)
+const inputMode = ref('servings') // 'servings' | 'amount'
+const rawAmount = ref(0)
 const editNutrition = ref({ calories: 0, protein: 0, carbs: 0, fat: 0 })
 const searchInput = ref(null)
 const foodSearchPanel = ref(null)
@@ -295,6 +338,31 @@ const dateLabel = computed(() => {
   const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
   return format(d, 'EEE, MMM d')
 })
+
+// Parse a serving size string like "28g" or "355 ml" into { value, unit }
+function parseServingSize(sizeStr) {
+  if (!sizeStr) return null
+  const match = sizeStr.match(/^([\d.]+)\s*([a-zA-Z]+)/)
+  if (!match) return null
+  return { value: parseFloat(match[1]), unit: match[2] }
+}
+
+const parsedServingSize = computed(() => {
+  if (selectedItem.value?.type !== 'food') return null
+  return parseServingSize(selectedItem.value.data?.servingSize)
+})
+
+const canUseAmount = computed(() => !!parsedServingSize.value)
+
+function setInputMode(mode) {
+  if (!parsedServingSize.value) return
+  if (mode === 'amount' && inputMode.value === 'servings') {
+    rawAmount.value = Math.round(servings.value * parsedServingSize.value.value * 10) / 10
+  } else if (mode === 'servings' && inputMode.value === 'amount') {
+    servings.value = Math.round((rawAmount.value / parsedServingSize.value.value) * 100) / 100 || 1
+  }
+  inputMode.value = mode
+}
 
 const filteredFoods = computed(() => {
   if (!myFoodsSearch.value.trim()) return foodStore.foods
@@ -322,8 +390,14 @@ watch(() => props.show, (isVisible) => {
     myFoodsSearch.value = ''
     selectedItem.value = null
     servings.value = 1
+    inputMode.value = 'servings'
     nextTick(() => searchInput.value?.focus())
   }
+})
+
+watch(selectedItem, () => {
+  inputMode.value = 'servings'
+  rawAmount.value = 0
 })
 
 watch(activeTab, (tab) => {
@@ -359,6 +433,10 @@ function selectFood(food) {
 }
 
 function confirmAdd() {
+  const finalServings = (inputMode.value === 'amount' && parsedServingSize.value)
+    ? rawAmount.value / parsedServingSize.value.value
+    : servings.value
+
   if (selectedItem.value.type === 'food') {
     const food = {
       ...selectedItem.value.data,
@@ -367,12 +445,12 @@ function confirmAdd() {
     emit('save', {
       foodId: food.id,
       food,
-      servings: servings.value
+      servings: finalServings
     })
   } else {
     emit('save', {
       recipeId: selectedItem.value.data.id,
-      servings: servings.value
+      servings: finalServings
     })
   }
 }

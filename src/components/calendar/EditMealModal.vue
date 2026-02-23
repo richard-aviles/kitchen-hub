@@ -27,14 +27,55 @@
           <p class="text-sm text-gray-500 dark:text-gray-400">{{ slotLabel }} &middot; {{ dateLabel }}</p>
         </div>
 
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Servings</label>
-        <input
-          v-model.number="servings"
-          type="number"
-          min="1"
-          max="99"
-          class="input w-24 mb-4"
-        />
+        <!-- Servings / Amount toggle (foods only) -->
+        <div v-if="canUseAmount" class="flex gap-1 bg-gray-100 dark:bg-slate-700 rounded-lg p-1 w-fit mb-3">
+          <button
+            type="button"
+            @click="setInputMode('servings')"
+            class="px-3 py-1 text-xs font-medium rounded-md transition-colors"
+            :class="inputMode === 'servings'
+              ? 'bg-white dark:bg-slate-600 shadow-sm text-gray-800 dark:text-gray-100'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+          >
+            Servings
+          </button>
+          <button
+            type="button"
+            @click="setInputMode('amount')"
+            class="px-3 py-1 text-xs font-medium rounded-md transition-colors"
+            :class="inputMode === 'amount'
+              ? 'bg-white dark:bg-slate-600 shadow-sm text-gray-800 dark:text-gray-100'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+          >
+            Amount ({{ parsedServingSize?.unit }})
+          </button>
+        </div>
+
+        <!-- Servings input -->
+        <div v-if="inputMode === 'servings'">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Servings</label>
+          <input
+            v-model.number="servings"
+            type="number"
+            min="0.25"
+            step="0.25"
+            class="input w-24 mb-4"
+          />
+        </div>
+
+        <!-- Amount input -->
+        <div v-else>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Amount ({{ parsedServingSize?.unit }})
+          </label>
+          <input
+            v-model.number="rawAmount"
+            type="number"
+            min="0.1"
+            step="1"
+            class="input w-24 mb-4"
+          />
+        </div>
 
         <div class="flex gap-2">
           <button
@@ -81,6 +122,33 @@ const recipeStore = useRecipeStore()
 const foodStore = useFoodStore()
 
 const servings = ref(1)
+const inputMode = ref('servings')
+const rawAmount = ref(0)
+
+const food = computed(() => {
+  if (!props.entry?.foodId) return null
+  return foodStore.getById(props.entry.foodId)
+})
+
+function parseServingSize(sizeStr) {
+  if (!sizeStr) return null
+  const match = sizeStr.match(/^([\d.]+)\s*([a-zA-Z]+)/)
+  if (!match) return null
+  return { value: parseFloat(match[1]), unit: match[2] }
+}
+
+const parsedServingSize = computed(() => parseServingSize(food.value?.servingSize))
+const canUseAmount = computed(() => !!parsedServingSize.value)
+
+function setInputMode(mode) {
+  if (!parsedServingSize.value) return
+  if (mode === 'amount' && inputMode.value === 'servings') {
+    rawAmount.value = Math.round(servings.value * parsedServingSize.value.value * 10) / 10
+  } else if (mode === 'servings' && inputMode.value === 'amount') {
+    servings.value = Math.round((rawAmount.value / parsedServingSize.value.value) * 100) / 100 || 1
+  }
+  inputMode.value = mode
+}
 
 const mealName = computed(() => {
   if (!props.entry) return ''
@@ -110,13 +178,18 @@ const dateLabel = computed(() => {
 watch(() => props.show, (isVisible) => {
   if (isVisible && props.entry) {
     servings.value = props.entry.servings || 1
+    inputMode.value = 'servings'
+    rawAmount.value = 0
   }
 })
 
 function handleSave() {
+  const finalServings = (inputMode.value === 'amount' && parsedServingSize.value)
+    ? rawAmount.value / parsedServingSize.value.value
+    : servings.value
   emit('save', {
     id: props.entry.id,
-    servings: servings.value
+    servings: finalServings
   })
 }
 </script>
