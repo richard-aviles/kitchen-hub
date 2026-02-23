@@ -6,7 +6,7 @@
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { getAllFoods, addFood as dbAddFood } from '../db/foods.js'
+import { getAllFoods, addFood as dbAddFood, deleteFood as dbDeleteFood } from '../db/foods.js'
 import { notifySyncNeeded } from '../composables/useSync.js'
 
 export const useFoodStore = defineStore('foods', () => {
@@ -47,12 +47,19 @@ export const useFoodStore = defineStore('foods', () => {
     return food
   }
 
+  async function remove(id) {
+    await dbDeleteFood(id)
+    foods.value = foods.value.filter(f => f.id !== id)
+    notifySyncNeeded()
+  }
+
   return {
     foods,
     loading,
     error,
     getById,
     loadAll,
-    addOrUpdate
+    addOrUpdate,
+    remove
   }
 })

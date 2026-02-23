@@ -88,6 +88,50 @@
           </div>
         </div>
 
+        <!-- Tab content: My Foods -->
+        <div v-if="activeTab === 'myfoods' && !selectedItem" class="flex-1 overflow-hidden flex flex-col">
+          <div class="p-4 border-b dark:border-slate-700">
+            <input
+              v-model="myFoodsSearch"
+              type="text"
+              placeholder="Filter saved foods..."
+              class="input"
+            />
+          </div>
+          <div class="flex-1 overflow-y-auto p-4">
+            <!-- No foods saved yet -->
+            <div v-if="foodStore.foods.length === 0" class="text-center py-12">
+              <BoltIcon class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+              <p class="text-base font-medium text-gray-500 dark:text-gray-400 mb-1">No saved foods yet</p>
+              <p class="text-sm text-gray-400 dark:text-gray-500">Use the Search or Scan tabs to add foods.</p>
+            </div>
+            <!-- No filter results -->
+            <div v-else-if="filteredFoods.length === 0" class="text-center py-12">
+              <p class="text-sm text-gray-500 dark:text-gray-400">No foods match "{{ myFoodsSearch }}"</p>
+            </div>
+            <!-- Foods list -->
+            <div v-else class="space-y-2">
+              <button
+                v-for="food in filteredFoods"
+                :key="food.id"
+                type="button"
+                @click="selectFood(food)"
+                class="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-primary-300 hover:bg-primary-50 dark:border-slate-600 dark:hover:border-primary-600 dark:hover:bg-primary-900/20 transition-colors"
+              >
+                <p class="font-medium text-gray-800 dark:text-gray-100 truncate">{{ food.name }}</p>
+                <p v-if="food.brand" class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ food.brand }}</p>
+                <div class="flex gap-3 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  <span class="text-amber-600 dark:text-amber-400 font-medium">{{ food.nutrition.calories }} cal</span>
+                  <span>P: {{ food.nutrition.protein }}g</span>
+                  <span>C: {{ food.nutrition.carbs }}g</span>
+                  <span>F: {{ food.nutrition.fat }}g</span>
+                  <span class="text-gray-400 dark:text-gray-500">per {{ food.servingSize }}</span>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- Tab content: Food Search -->
         <FoodSearchPanel
           v-if="activeTab === 'food' && !selectedItem"
@@ -201,7 +245,7 @@
 import { ref, computed, watch, nextTick } from 'vue'
 import { format } from 'date-fns'
 import { XMarkIcon, BookOpenIcon, BoltIcon } from '@heroicons/vue/24/outline'
-import { useRecipeStore } from '../../stores'
+import { useRecipeStore, useFoodStore } from '../../stores'
 import FoodSearchPanel from './FoodSearchPanel.vue'
 import BarcodeScannerPanel from './BarcodeScannerPanel.vue'
 
@@ -223,15 +267,18 @@ const props = defineProps({
 const emit = defineEmits(['save', 'cancel'])
 
 const recipeStore = useRecipeStore()
+const foodStore = useFoodStore()
 
 const tabs = [
-  { id: 'recipe', label: 'Recipe' },
-  { id: 'food', label: 'Food Search' },
-  { id: 'scan', label: 'Scan Barcode' }
+  { id: 'recipe', label: 'Recipes' },
+  { id: 'myfoods', label: 'My Foods' },
+  { id: 'food', label: 'Search' },
+  { id: 'scan', label: 'Scan' }
 ]
 
 const activeTab = ref('recipe')
 const searchQuery = ref('')
+const myFoodsSearch = ref('')
 const selectedItem = ref(null)  // { type: 'recipe'|'food', name, data }
 const servings = ref(1)
 const editNutrition = ref({ calories: 0, protein: 0, carbs: 0, fat: 0 })
@@ -249,6 +296,15 @@ const dateLabel = computed(() => {
   return format(d, 'EEE, MMM d')
 })
 
+const filteredFoods = computed(() => {
+  if (!myFoodsSearch.value.trim()) return foodStore.foods
+  const q = myFoodsSearch.value.toLowerCase()
+  return foodStore.foods.filter(f =>
+    f.name.toLowerCase().includes(q) ||
+    (f.brand && f.brand.toLowerCase().includes(q))
+  )
+})
+
 const filteredRecipes = computed(() => {
   const query = searchQuery.value.toLowerCase().trim()
   if (!query) return recipeStore.recipes
@@ -263,6 +319,7 @@ watch(() => props.show, (isVisible) => {
   if (isVisible) {
     activeTab.value = 'recipe'
     searchQuery.value = ''
+    myFoodsSearch.value = ''
     selectedItem.value = null
     servings.value = 1
     nextTick(() => searchInput.value?.focus())
